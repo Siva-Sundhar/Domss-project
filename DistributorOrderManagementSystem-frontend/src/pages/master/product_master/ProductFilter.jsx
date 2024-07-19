@@ -159,7 +159,7 @@ const ProductFilter = () => {
                           className="block"
                           to={`/displayProduct/${prod.productCode}`}
                         >
-                          {prod.productCode} - {prod.productDescription}
+                          {prod.productCode} - {prod.description}
                         </Link>
                       </td>
                     </tr>
@@ -194,7 +194,7 @@ const ProductFilter = () => {
                         value={prod.productCode}
                         className="block text-left text-[13px] pl-2"
                       >
-                        {prod.productCode} - {prod.productDescription}
+                        {prod.productCode} - {prod.description}
                       </option>
                     ))}
                   </select>

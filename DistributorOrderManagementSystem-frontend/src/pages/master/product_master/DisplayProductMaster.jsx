@@ -10,10 +10,10 @@ const DisplayProductMaster = () => {
 
   const [product, setProduct] = useState({
     productCode: "",
-    productDescription: "",
-    productCategory: "",
-    productUom: "",
-    productGroup: "",
+    description: "",
+    stockCategory: "",
+    uom: "",
+    stockGroup: "",
     standardCost: "",
     sellingPrice: "",
     discount: "",
@@ -21,10 +21,10 @@ const DisplayProductMaster = () => {
 
   const inputRefs = useRef({
     productCode: null,
-    productDescription: null,
-    productUom: null,
-    productCategory: null,
-    productGroup: null,
+    description: null,
+    uom: null,
+    stockCategory: null,
+    stockGroup: null,
     standardCost: null,
     sellingPrice: null,
     discount: null,
@@ -221,7 +221,7 @@ const DisplayProductMaster = () => {
 
               <div className="input-ldgr mt-1">
                 <label
-                  htmlFor="productDescription"
+                  htmlFor="description"
                   className="text-sm mr-[22px] ml-2"
                 >
                   Product Description
@@ -229,13 +229,13 @@ const DisplayProductMaster = () => {
                 :{" "}
                 <input
                   type="text"
-                  id="productDescription"
-                  name="productDescription"
-                  value={product.productDescription}
+                  id="description"
+                  name="description"
+                  value={product.description}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
                   ref={(input) =>
-                    (inputRefs.current.productDescription = input)
+                    (inputRefs.current.description = input)
                   }
                   className="w-[300px] ml-2 h-5 capitalize font-medium pl-1 text-sm focus:bg-yellow-200 focus:border focus:border-blue-500 focus:outline-none"
                   autoComplete="off"
@@ -243,18 +243,18 @@ const DisplayProductMaster = () => {
               </div>
 
               <div className="input-ldgr">
-                <label htmlFor="productUom" className="text-sm mr-[60px] ml-2">
+                <label htmlFor="uom" className="text-sm mr-[60px] ml-2">
                   Product UOM
                 </label>
                 :{" "}
                 <input
                   type="text"
-                  id="productUom"
-                  name="productUom"
-                  value={product.productUom}
+                  id="uom"
+                  name="uom"
+                  value={product.uom}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
-                  ref={(input) => (inputRefs.current.productUom = input)}
+                  ref={(input) => (inputRefs.current.uom = input)}
                   className="w-[300px] ml-2 h-5 capitalize font-medium pl-1 text-sm focus:bg-yellow-200 focus:border focus:border-blue-500 focus:outline-none"
                   autoComplete="off"
                 />
@@ -262,7 +262,7 @@ const DisplayProductMaster = () => {
 
               <div className="input-ldgr">
                 <label
-                  htmlFor="productCategory"
+                  htmlFor="stockCategory"
                   className="text-sm mr-[36px] ml-2"
                 >
                   Product Category
@@ -270,12 +270,12 @@ const DisplayProductMaster = () => {
                 :{" "}
                 <input
                   type="text"
-                  id="productCategory"
-                  name="productCategory"
-                  value={product.productCategory}
+                  id="stockCategory"
+                  name="stockCategory"
+                  value={product.stockCategory}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
-                  ref={(input) => (inputRefs.current.productCategory = input)}
+                  ref={(input) => (inputRefs.current.stockCategory = input)}
                   className="w-[300px] ml-2 h-5 capitalize font-medium pl-1 text-sm focus:bg-yellow-200 focus:border focus:border-blue-500 focus:outline-none"
                   autoComplete="off"
                 />
@@ -283,7 +283,7 @@ const DisplayProductMaster = () => {
 
               <div className="input-ldgr">
                 <label
-                  htmlFor="productGroup"
+                  htmlFor="stockGroup"
                   className="text-sm mr-[55px] ml-2"
                 >
                   Product Group
@@ -291,14 +291,14 @@ const DisplayProductMaster = () => {
                 :{" "}
                 <input
                   type="text"
-                  id="productGroup"
-                  name="productGroup"
-                  value={product.productGroup}
+                  id="stockGroup"
+                  name="stockGroup"
+                  value={product.stockGroup}
                   onChange={(e) =>
-                    setProduct({ ...product, productGroup: e.target.value })
+                    setProduct({ ...product, stockGroup: e.target.value })
                   }
                   onKeyDown={handleKeyDown}
-                  ref={(input) => (inputRefs.current.productGroup = input)}
+                  ref={(input) => (inputRefs.current.stockGroup = input)}
                   className="w-[300px] ml-2 h-5 capitalize font-medium pl-1 text-sm focus:bg-yellow-200 focus:border focus:border-blue-500 focus:outline-none"
                   autoComplete="off"
                 />

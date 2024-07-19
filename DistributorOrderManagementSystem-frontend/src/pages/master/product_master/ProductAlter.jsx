@@ -158,7 +158,7 @@ const ProductAlter = () => {
                           to={`/alterProductMaster/${prod.productCode}`}
                           className="block"
                         >
-                          {prod.productCode} - {prod.productDescription}
+                          {prod.productCode} - {prod.description}
                         </Link>
                       </td>
                     </tr>
@@ -192,7 +192,7 @@ const ProductAlter = () => {
                         value={prod.productCode}
                         className="block text-left pl-2 text-[13px]"
                       >
-                        {prod.productCode} - {prod.productDescription}
+                        {prod.productCode} - {prod.description}
                       </option>
                     ))}
                   </select>
