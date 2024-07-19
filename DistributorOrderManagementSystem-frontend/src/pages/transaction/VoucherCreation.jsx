@@ -49,7 +49,7 @@ const VoucherCreation = () => {
 	const [selectIndex, setSelectIndex] = useState(0);
 	const [selectIndexDist, setSelectIndexDist] = useState(0);
 	const [focusedRow, setFofusedRow] = useState(null);
-	// const [total, setTotal] = useState("")
+	const [total, setTotal] = useState("")
 
 	const inputRefs = useRef([]);
 	const listRefs = useRef([]);
