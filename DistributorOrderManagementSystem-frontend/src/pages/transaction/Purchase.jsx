@@ -189,7 +189,7 @@ const Purchase = () => {
 				e.preventDefault();
 			} else if(e.key === "Backspace"){
 				if (property === "category") {
-					if(e.target.value !== ""){
+					if(e.target.value.trim() !== ""){
 						return
 					} else {
 						if (rowIndex > 0) {
@@ -717,7 +717,7 @@ const Purchase = () => {
 								className="w-[65%] border border-fuchsia-700 h-[18px] focus:bg-[#fee8af] focus:border-blue-500 text-[13px] pl-0.5 bg-transparent outline-0 font-semibold"
 							/>
 						</div>
-						<div className="w-[610px] ">
+						<div className="w-[610px]">
 							<div className="flex leading-4 ">
 								<label htmlFor="" className="w-[10%]">
 									Narration

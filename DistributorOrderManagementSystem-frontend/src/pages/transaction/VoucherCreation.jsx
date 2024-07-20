@@ -66,7 +66,7 @@ const VoucherCreation = () => {
 	const loadCategory = async () => {
 		const response = await axios.get("http://localhost:9080/products/allProducts");
 		setProductData(response.data);
-		console.log(productData);
+		
 	};
 
 	const loadRegion = async ()=>{
@@ -141,6 +141,14 @@ const VoucherCreation = () => {
 				handleDistributor(distributorData[selectIndexDist]);
 				setShowDistributor(false)
 				tableRefs.current[0].focus();
+			} else if(e.key === "Backspace"){
+				if(e.target.value.trim() !== ""){
+					return;
+				} else {
+					e.preventDefault()
+					inputRefs.current[1].focus();
+					inputRefs.current[1].setSelectionRange(0, 0);
+				}
 			}
 		}
 	}
@@ -198,13 +206,44 @@ const VoucherCreation = () => {
 				e.preventDefault();
 					handleSelect(property, options[selectIndex], rowIndex);
 					if(property === 'category' && tableData[rowIndex].category === "♦ End of List"){
-						inputRefs.current[3].focus()
+						inputRefs.current[3]?.focus()
 						
 					} else {
 						tableRefs.current[rowIndex * 10 + (property === 'category' ? 1 : 2)]?.focus();
 					}
 			} else if (e.key === "Tab") {
 				e.preventDefault();
+			} else if(e.key === 'Backspace'){
+				if(property === 'category'){
+					if(e.target.value.trim() !== ""){
+						return;
+					} else {
+						if(rowIndex > 0){
+							const prevRowIndex = rowIndex - 1;
+							const prevRow = prevRowIndex * 10 + 3;
+							e.preventDefault()
+							tableRefs.current[prevRow]?.focus();
+						} else {
+							e.preventDefault();
+							inputRefs.current[2]?.focus();
+							inputRefs.current[2].setSelectionRange(0, 0);
+						}
+					}
+				} else if(property === 'code'){
+					if(e.target.value.trim() !== ""){
+						return;
+						} else {
+							if(rowIndex > 0){
+								e.preventDefault();
+								tableRefs.current[rowIndex * 10 + 0]?.focus();
+							} else {
+								e.preventDefault();
+								tableRefs.current[0]?.focus();
+								tableRefs.current[0].setSelectionRange(0, 0);
+							}
+						}
+
+				}
 			}
 		} else {
 			setSelectIndex(0);
@@ -297,13 +336,17 @@ const VoucherCreation = () => {
 					tableRefs.current[prevIndex].setSelectionRange(0,0)
 				}
 		} else {
-			const prevIndex = rowIndex - 1;
+			
 			if(e.target.value.trim() !== ""){
 				return;
 			} else {
+				const prevIndex = rowIndex - 1;
+				console.log(prevIndex)
+				if(prevIndex < inputRefs.current.length){
 				e.preventDefault()
 				inputRefs.current[prevIndex]?.focus();
 				inputRefs.current[prevIndex].setSelectionRange(0,0)
+				}
 			}
 		}
 	}
@@ -328,7 +371,6 @@ const VoucherCreation = () => {
 			const newRowIndex = tableData.length;
 			tableRefs.current[ newRowIndex * 10].focus();
 			setFilteredOption(category)
-
 		},0)
 	};
 	
@@ -349,9 +391,7 @@ const VoucherCreation = () => {
 		const voucherDate = convertDateFormat(vDate)
 		const orderItems = tableData.filter((item)=>{
 			return item.category !== "♦ End of List" 
-		}
-			
-		)
+		})
 		try {
 			// Prepare data to send to the server
 			const formData = {
@@ -367,21 +407,26 @@ const VoucherCreation = () => {
 			};
 			// Handle response if needed
 			await axios.post("http://localhost:9080/orders/booking", formData);
-			console.log(formData)
 		} catch (error) {
-			
 			console.error("Error:", error);
 		}
 	};
 
 	const handleKeyDown = (e)=>{
-
-		if(e.key === 'Enter'){
+		const key = e.key;
+		if(key === 'Enter'){
 			e.preventDefault();
 			if(e.target.value !== ""){
 				const userConfirmed = window.confirm("Do you want confirm order");
 				if(userConfirmed)
 					handleSubmit();
+			}
+		} else if(key === 'Backspace'){
+			if(e.target.value.trim() !== ""){
+				return;
+			} else {
+				inputRefs.current[4]?.focus();
+				inputRefs.current[4].setSelectionRange(0, 0);
 			}
 		}
 	}
@@ -549,7 +594,7 @@ const VoucherCreation = () => {
 						</thead>
 						<tbody>
 							{tableData.map((data, rowIndex) => (
-								<tr key={data.id} className=" text-[13px] h-[17px] leading-4">
+								<tr key={rowIndex} className=" text-[13px] h-[17px] leading-4">
 									<td className="w-[60px] text-center border border-slate-300 bg-white">
 										{rowIndex + 1}
 									</td>
@@ -721,16 +766,26 @@ const VoucherCreation = () => {
 									</td>
 								</tr>
 							))}
-							<tr>
-								
-							</tr>
+							
 						</tbody>
 					</table>
 				</div>
 
-				<div className="w-full flex justify-end">
+				<div className="w-full flex justify-end ">
+				<div>Total</div>
 				<div className="w-40 border-b h-[18px] text-[13px] font-semibold text-right pr-2">
-				{total}</div>
+				{total
+											? Intl.NumberFormat("en-NG", {
+													style: "currency",
+													currency: "NGN",
+													minimumFractionDigits: 2,
+											})
+													.formatToParts(total)
+													.map(({ type, value }) =>
+														type === "currency" ? `${value} ` : value
+													)
+													.join("")
+											: ""}</div>
 				</div>
 				<div className=" px-1 flex text-[14px] mt-3 w-full justify-between">
 					<div className="w-[600px] flex justify-between ">
@@ -746,11 +801,23 @@ const VoucherCreation = () => {
 								value={createdBy}
 								type="text"
 								ref={(el) => (inputRefs.current[3] = el)}
-								onKeyDown={(e) =>
-									e.key === "Enter" &&
-									e.target.value !== "" &&
-									inputRefs.current[3].focus()
-								}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && e.target.value.trim() !== "") {
+										inputRefs.current[4].focus();
+									} else if(e.key === 'Backspace'){
+										if(e.target.value !== ""){
+											return;
+										} else {
+											const lastRow = tableData.length - 1;
+											const lastCell = lastRow * 10 + 0;
+											if(tableRefs.current[lastCell]){
+												tableRefs.current[lastCell].focus();
+												tableRefs.current[lastCell].setSelectionRange(0, 0);
+											}
+
+										}
+									}
+								}}
 								className="w-[65%] border border-fuchsia-700 h-[18px] focus:bg-[#fee8af] focus:border-blue-500 text-[13px] pl-0.5 bg-transparent outline-0 font-semibold"
 							/>
 						</div>
@@ -767,11 +834,7 @@ const VoucherCreation = () => {
 								value={approvedBy}
 								type="text"
 								ref={(el) => (inputRefs.current[4] = el)}
-								onKeyDown={(e) =>
-									e.key === "Enter" &&
-									e.target.value !== "" &&
-									inputRefs.current[4].focus()
-								}
+								onKeyDown={(e) => handleKeyPress (e, 4, null, false )}
 								className="w-[65%] border border-fuchsia-700 h-[18px] focus:bg-[#fee8af] focus:border-blue-500 text-[13px] pl-0.5 bg-transparent outline-0 font-semibold"
 							/>
 						</div>

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+
 import { IoClose } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { createNewLedgerMaster } from "../../../services/MasterService";
+import { useEffect, useRef, useState } from "react";
 
 const LedgerMaster = () => {
   const [ledgerCode, setLedgerCode] = useState("");
@@ -51,7 +52,7 @@ const LedgerMaster = () => {
       if (event.ctrlKey && event.key === "a") {
         event.preventDefault();
         acceptButtonRef.current.click();
-        saveGodownMaster(event);
+  
       }
     };
 
@@ -150,7 +151,7 @@ const LedgerMaster = () => {
         // navigator('/addedLedger');
       })
       .catch((error) => {
-        console.error("Error creating ledger master:", ledger);
+        console.error("Error creating ledger master:", error);
       });
   }
 
