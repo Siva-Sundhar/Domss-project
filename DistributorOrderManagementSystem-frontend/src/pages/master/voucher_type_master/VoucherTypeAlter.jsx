@@ -9,20 +9,20 @@ const VoucherTypeAlter = () => {
   const [filteredVoucherNames, setFilteredVoucherNames] = useState([]);
   const [filteredVoucherTypes, setFilteredVoucherTypes] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [startIndex, setStartIndex] = useState(0);
+  const [remainingItemsCount, setRemainingItemsCount] = useState(0);
   const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const selectedRef = useRef(null);
   const navigate = useNavigate();
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     inputRef.current.focus();
 
     listOfVoucherTypeNames()
       .then(response => {
-
         setVoucherTypeNames(response.data);
-        setFilteredVoucherNames(response.data.slice(0, 20));
-        setShowDropdown(response.data.length > 20);
+        setFilteredVoucherNames(response.data);
       })
       .catch(error => {
         console.error(error);
@@ -30,10 +30,8 @@ const VoucherTypeAlter = () => {
 
     listOfVoucherTypes()
       .then(response => {
-
         setVoucherTypes(response.data);
-        setFilteredVoucherTypes(response.data.slice(0, 20));
-        setShowDropdown(response.data.length > 20);
+        setFilteredVoucherTypes(response.data);
       })
       .catch(error => {
         console.error(error);
@@ -41,48 +39,52 @@ const VoucherTypeAlter = () => {
   }, []);
 
   useEffect(() => {
-
     filterVoucherNames();
   }, [voucherTypeName]);
 
   useEffect(() => {
     const handleKeyDown = e => {
-      const totalItems = showDropdown
-        ? filteredVoucherNames.length + filteredVoucherTypes.length + 3 // Create, Back, Dropdown
-        : filteredVoucherNames.length + filteredVoucherTypes.length + 2; // Create, Back
+      const totalItems = filteredVoucherNames.length + filteredVoucherTypes.length + 2; // Create, Back
 
       if (e.key === 'ArrowDown') {
-        setSelectedIndex(prevIndex => (prevIndex + 1) % totalItems);
-        e.preventDefault();
+        if (selectedIndex < totalItems - 1) { // Ensure we don't go beyond the last item
+          setSelectedIndex(prevIndex => {
+            const newIndex = prevIndex + 1;
+            if (newIndex >= 2 && newIndex >= startIndex + ITEMS_PER_PAGE) {
+              setStartIndex(prevStartIndex => {
+                const newStartIndex = Math.min(filteredVoucherNames.length + filteredVoucherTypes.length - ITEMS_PER_PAGE, prevStartIndex + 1);
+                setRemainingItemsCount(filteredVoucherNames.length + filteredVoucherTypes.length - (newStartIndex + ITEMS_PER_PAGE));
+                return newStartIndex;
+              });
+            }
+            return newIndex;
+          });
+        }
       } else if (e.key === 'ArrowUp') {
-        setSelectedIndex(prevIndex => (prevIndex - 1 + totalItems) % totalItems);
-        e.preventDefault();
+        if (selectedIndex > 0) { // Ensure we don't go before the "Create" link
+          setSelectedIndex(prevIndex => {
+            const newIndex = prevIndex - 1;
+            if (newIndex >= 2 && newIndex < startIndex) {
+              setStartIndex(prevStartIndex => {
+                const newStartIndex = Math.max(0, prevStartIndex - 1);
+                setRemainingItemsCount(filteredVoucherNames.length + filteredVoucherTypes.length - (newStartIndex + ITEMS_PER_PAGE));
+                return newStartIndex;
+              });
+            }
+            return newIndex;
+          });
+        }
       } else if (e.key === 'Enter') {
         if (selectedIndex === 0) {
           navigate('/create/voucherType');
         } else if (selectedIndex === 1) {
           navigate('/alter');
-        } else if (
-          showDropdown &&
-          selectedIndex === filteredVoucherNames.length + filteredVoucherTypes.length + 2
-        ) {
-          dropdownRef.current.focus();
-
-    
-        } else if (filteredVoucherNames[selectedIndex - 2]) {
-          navigate(
-            `/alterVoucherTypeMaster/${filteredVoucherNames[selectedIndex - 2].voucherTypeName}`,
-          );
-        } else if (filteredVoucherTypes[selectedIndex - filteredVoucherNames.length - 2]) {
-          navigate(
-            `/displayVoucherType/${
-              filteredVoucherTypes[selectedIndex - filteredVoucherNames.length - 2].voucherType
-            }`,
-          );
+        } else if (selectedIndex < filteredVoucherNames.length + 2) {
+          navigate(`/alterVoucherTypeMaster/${filteredVoucherNames[selectedIndex - 2].voucherTypeName}`);
+        } else if (selectedIndex < filteredVoucherNames.length + filteredVoucherTypes.length + 2) {
+          navigate(`/displayVoucherType/${filteredVoucherTypes[selectedIndex - filteredVoucherNames.length - 2].voucherType}`);
         }
-
         e.preventDefault();
-
       } else if (e.key === 'Escape') {
         navigate('/alter');
       }
@@ -93,35 +95,46 @@ const VoucherTypeAlter = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [filteredVoucherNames, filteredVoucherTypes, selectedIndex, navigate, showDropdown]);
+  }, [filteredVoucherNames, filteredVoucherTypes, selectedIndex, navigate, startIndex]);
+
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedIndex]);
 
   const filterVoucherNames = () => {
     if (voucherTypeName === '') {
-
-      setFilteredVoucherNames(voucherTypeNames.slice(0, 20));
-      setFilteredVoucherTypes(voucherTypes.slice(0, 20));
-      setShowDropdown(voucherTypeNames.length > 20 || voucherTypes.length > 20);
+      setFilteredVoucherNames(voucherTypeNames);
+      setFilteredVoucherTypes(voucherTypes);
     } else {
-      const filteredNames = voucherTypeNames
-        .filter(vou => vou.voucherTypeName.toLowerCase().includes(voucherTypeName.toLowerCase()))
-        .slice(0, 20);
+      const filteredNames = voucherTypeNames.filter(vou =>
+        vou.voucherTypeName.toLowerCase().includes(voucherTypeName.toLowerCase())
+      );
 
-      const filteredTypes = voucherTypes
-        .filter(vou => vou.voucherType.toLowerCase().includes(voucherTypeName.toLowerCase()))
-        .slice(0, 20);
-
+      const filteredTypes = voucherTypes.filter(vou =>
+        vou.voucherType.toLowerCase().includes(voucherTypeName.toLowerCase())
+      );
 
       setFilteredVoucherNames(filteredNames);
       setFilteredVoucherTypes(filteredTypes);
-      setShowDropdown(filteredNames.length > 20 || filteredTypes.length > 20);
     }
+    setStartIndex(0);
+    setRemainingItemsCount((filteredVoucherNames.length + filteredVoucherTypes.length) - ITEMS_PER_PAGE);
     setSelectedIndex(2); // Reset selection index after filtering
   };
 
-  const handleDropdownChange = e => {
-    const selectedVoucherType = e.target.value;
-    navigate(`/displayVoucherType/${selectedVoucherType}`);
-  };
+  const displayedVoucherNames = filteredVoucherNames.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  const displayedVoucherTypes = filteredVoucherTypes.slice(
+    startIndex - Math.max(filteredVoucherNames.length - ITEMS_PER_PAGE, 0),
+    startIndex + ITEMS_PER_PAGE - filteredVoucherNames.length
+  );
+
+  const totalDisplayedItems = displayedVoucherNames.length + displayedVoucherTypes.length;
 
   return (
     <>
@@ -139,11 +152,8 @@ const VoucherTypeAlter = () => {
                 id="voucherTypeName"
                 name="voucherTypeName"
                 value={voucherTypeName}
-
-
                 onChange={e => {
                   setVoucherTypeName(e.target.value);
-                  filterVoucherNames();
                 }}
                 ref={inputRef}
                 className="w-[250px] ml-2 mt-2 h-5 capitalize font-medium pl-1 text-sm focus:bg-yellow-200 focus:border focus:border-blue-500 focus:outline-none"
@@ -151,7 +161,7 @@ const VoucherTypeAlter = () => {
               />
             </div>
 
-            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def1fc]">
+            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def]">
               <h2 className="p-1 bg-[#2a67b1] text-white text-left text-[14px]">
                 List of Voucher Types
               </h2>
@@ -160,9 +170,7 @@ const VoucherTypeAlter = () => {
                 <Link
                   tabIndex={0}
                   onFocus={() => setSelectedIndex(0)}
-                  className={`block text-center text-[14px] focus:bg-[#FEB941] outline-none ${
-                    selectedIndex === 0 ? 'bg-[#FEB941]' : ''
-                  }`}
+                  className={`block text-center text-[14px] focus:bg-[#FEB941] outline-none ${selectedIndex === 0 ? 'bg-[#FEB941]' : ''}`}
                   to={'/create/voucherType'}
                 >
                   <p className="ml-[285px] text-[13px]">Create</p>
@@ -170,90 +178,76 @@ const VoucherTypeAlter = () => {
                 <Link
                   tabIndex={0}
                   onFocus={() => setSelectedIndex(1)}
-                  className={`block text-center text-[14px] focus:bg-[#FEB941] outline-none ${
-                    selectedIndex === 1 ? 'bg-[#FEB941]' : ''
-                  }`}
+                  className={`block text-center text-[14px] focus:bg-[#FEB941] outline-none ${selectedIndex === 1 ? 'bg-[#FEB941]' : ''}`}
                   to={'/alter'}
                 >
                   <p className="ml-[287px] text-[13px]">Back</p>
                 </Link>
               </div>
-
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVoucherNames.map((vou, index) => (
-                    <tr
-                      key={vou.voucherTypeName}
-                      className={selectedIndex === index + 2 ? 'bg-[#FEB941]' : ''}
-                    >
-                      <td className="w-[350px]">
-                        <Link
-                          className="text-[12.5px]"
-                          to={`/alterVoucherTypeMaster/${vou.voucherTypeName}`}
-                          tabIndex={0}
-                          onFocus={() => setSelectedIndex(index + 2)}
-                        >
-                          <div className="flex text-left pl-2 capitalize">
-                            {vou.voucherTypeName}
-                          </div>
-                        </Link>
-                      </td>
+              <div className='h-[68vh] overflow-hidden'>
+                <table className='w-full'>
+                  <thead>
+                    <tr>
+                      <th></th>
                     </tr>
-                  ))}
-
-                  {filteredVoucherTypes.map((vou, index) => (
-                    <tr
-                      key={vou.voucherType}
-                      className={
-                        selectedIndex === index + filteredVoucherNames.length + 2
-                          ? 'bg-[#FEB941]'
-                          : ''
-                      }
-                    >
-                      <td className="w-[350px]">
-                        <Link
-                          className="text-[12.5px]"
-                          to={`/displayVoucherType/${vou.voucherType}`}
-                          tabIndex={0}
-                          onFocus={() => setSelectedIndex(index + filteredVoucherNames.length + 2)}
+                  </thead>
+                  <tbody>
+                    {displayedVoucherNames.map((vou, index) => {
+                      const actualIndex = startIndex + index;
+                      const linkPath = `/alterVoucherTypeMaster/${vou.voucherTypeName}`;
+                      return (
+                        <tr
+                          key={vou.voucherTypeName}
+                          className={selectedIndex === actualIndex + 2 ? 'bg-[#FEB941]' : ''}
                         >
-                          <div className="flex text-left pl-2 capitalize">{vou.voucherType}</div>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {showDropdown && (
-                <div className="mt-2">
-                  <label
-                    htmlFor="voucherTypeDropDown"
-                    className="block text-center text-[14px] mb-1"
-                  >
-                    Select Other Voucher Types
-                  </label>
-                  <select
-                    name="voucherTypeDropDown"
-                    id="voucherTypeDropDown"
-                    ref={dropdownRef}
-                    className={`w-full border border-gray-600 bg-[#BBE9FF] p-1 text-[13px] focus:bg-yellow-200 focus:border focus:border-blue-500 focus:outline-none`}
-                    onChange={handleDropdownChange}
-                  >
-                    <option value="">-- Select --</option>
-                    {voucherTypes.map(vou => (
-                      <option key={vou.voucherType} value={vou.voucherType}>
-                        {vou.voucherType}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                          <td className="w-[350px]">
+                            <Link
+                              className="text-[12.5px]"
+                              to={linkPath}
+                              tabIndex={0}
+                              onFocus={() => setSelectedIndex(actualIndex + 2)}
+                            >
+                              <div className="flex text-left pl-2 capitalize">
+                                {vou.voucherTypeName}
+                              </div>
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {displayedVoucherTypes.map((vou, index) => {
+                      const actualIndex = startIndex + displayedVoucherNames.length + index;
+                      const linkPath = `/displayVoucherType/${vou.voucherType}`;
+                      return (
+                        <tr
+                          key={vou.voucherType}
+                          className={selectedIndex === actualIndex + 2 ? 'bg-[#FEB941]' : ''}
+                        >
+                          <td className="w-[350px]">
+                            <Link
+                              className="text-[12.5px]"
+                              to={linkPath}
+                              tabIndex={0}
+                              onFocus={() => setSelectedIndex(actualIndex + 2)}
+                            >
+                              <div className="flex text-left pl-2 capitalize">
+                                {vou.voucherType}
+                              </div>
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            {totalDisplayedItems > ITEMS_PER_PAGE && (
+              <div className="mt-2 w-[350px] h-6 border border-t-0 border-gray-600 bg-[#def1fc] flex justify-end pr-2">
+                <p className="text-[12px] text-black">Remaining Items: {remainingItemsCount}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

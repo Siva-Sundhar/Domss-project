@@ -140,7 +140,7 @@ const RegionFilter = () => {
               />
             </div>
 
-            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def1fc]">
+            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def]">
 
               <h2 className="p-1 bg-[#2a67b1] text-white text-left text-[13px]">List of Regions</h2>
                 <div className="border border-b-gray-500 w-[347px]">
@@ -165,7 +165,7 @@ const RegionFilter = () => {
                   </Link>
                 </div>
 
-                <div className='h-[68.5vh] overflow-hidden'>
+                <div className='h-[68.4vh] overflow-hidden'>
                   <table className='w-full'>
                     <thead>
                       <tr>
@@ -189,9 +189,11 @@ const RegionFilter = () => {
                     </tbody>
                   </table>
                 </div>
-                <div className='text-left p-2 bg-[#2a67b1] text-white text-[13px]'>
-                  Remaining: {remainingItemsCount} regions
-                </div>
+                {filteredRegions.length > ITEMS_PER_PAGE && (
+                  <div className='text-left p-2 bg-[#2a67b1]'>
+                    <p className='text-white text-[13px]'>Remaining: {remainingItemsCount} regions</p>
+                  </div>
+                )}
             </div>
           </div>
         </div>

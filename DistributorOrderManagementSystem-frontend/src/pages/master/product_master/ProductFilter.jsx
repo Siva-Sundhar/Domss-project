@@ -140,7 +140,7 @@ const ProductFilter = () => {
               />
             </div>
 
-            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def1fc]">
+            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def]">
 
               <h2 className="p-1 bg-[#2a67b1] text-white text-left text-[13px]">
                 List of Products
@@ -197,10 +197,11 @@ const ProductFilter = () => {
                     </tbody>
                   </table>
                 </div>
-                <div className="text-left p-2 text-white text-[13px] bg-[#2a67b1]">
-                  Remaining: {remainingItemsCount} products
-
-                </div>
+                {filteredProducts.length > ITEMS_PER_PAGE && (
+                <div className='text-left p-2 bg-[#2a67b1]'>
+                <p className='text-white text-[13px]'>Remaining: {remainingItemsCount} products</p>
+              </div>
+              )}
             </div>
           </div>
         </div>

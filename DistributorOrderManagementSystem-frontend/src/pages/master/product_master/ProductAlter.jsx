@@ -105,14 +105,14 @@ const ProductAlter = () => {
     );
     setFilteredProducts(filtered);
     setStartIndex(0);
+    setRemainingItemsCount(filtered.length - ITEMS_PER_PAGE);
     setSelectedIndex(2); //Reset selected index to the first element in the filtered list
   };
 
-  const handleDropdownChange = e => {
-    const selectedProductCode = e.target.value;
-    navigate(`/alterProductMaster/${selectedProductCode}`);
-  };
-
+  const displayedProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
   return (
     <>
       <div className="flex justify-evenly" onClick={() => inputRef.current.focus()}>
@@ -136,48 +136,56 @@ const ProductAlter = () => {
               />
             </div>
 
-            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def1fc]">
+            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def]">
               <h2 className="p-1 bg-[#2a67b1] text-white text-left text-[13px]">List of Product</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                  </tr>
-                </thead>
-                <div className="border border-b-gray-500 w-[347px]">
-                  <Link
-                    className={`block text-center text-[13px] ${
-                      selectedIndex === 0 ? 'bg-[#FEB941]' : ''
-                    }`}
-                    to={'/create/product'}
-                  >
-                    <p className="ml-[285px] text-[14px]">Create</p>
-                  </Link>
-                  <Link
-                    className={`block text-center text-[13px] ${
-                      selectedIndex === 1 ? 'bg-[#FEB941]' : ''
-                    }`}
-                    to={'/alter'}
-                  >
-                    <p className="ml-[287px] text-[14px] ">Back</p>
-                  </Link>
-                </div>
-                <tbody>
-                  {filteredProducts.map((prod, index) => (
-                    <tr
-                      key={prod.productCode}
-                      className={selectedIndex === index + 2 ? 'bg-[#FEB941]' : ''}
-                    >
-                      <td className="flex text-left text-[13px] pl-2 capitalize">
-                        <Link to={`/alterProductMaster/${prod.productCode}`} className="block">
-                          {prod.productCode} - {prod.description}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="border border-b-gray-500 w-[347px]">
+                <Link
+                  className={`block text-center text-[13px] ${
+                    selectedIndex === 0 ? 'bg-[#FEB941]' : ''
+                  }`}
+                  to={'/create/product'}
+                >
+                  <p className="ml-[285px] text-[14px]">Create</p>
+                </Link>
+                <Link
+                  className={`block text-center text-[13px] ${
+                    selectedIndex === 1 ? 'bg-[#FEB941]' : ''
+                  }`}
+                  to={'/alter'}
+                >
+                  <p className="ml-[287px] text-[14px] ">Back</p>
+                </Link>
+              </div>
 
+              <div className='h-[68vh] overflow-hidden'>
+                <table className='w-full'>
+                  <thead>
+                    <tr>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedProducts.map((prod, index) => (
+                      <tr
+                        key={prod.productCode}
+                        className={selectedIndex === index + 2 ? 'bg-[#FEB941]' : ''}
+                        ref={selectedIndex === index + 2 + startIndex ? selectedRef : null}
+                      >
+                        <td className="text-[13px] w-full">
+                          <Link to={`/alterProductMaster/${prod.productCode}`} className={`block w-full text-left pl-2 ${selectedIndex === index + 2 + startIndex ? 'bg-[#FEB941]' : ''}`}>
+                            {prod.productCode} - {prod.description}
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {filteredProducts.length > ITEMS_PER_PAGE && (
+                <div className='text-left p-2 bg-[#2a67b1]'>
+                <p className='text-white text-[13px]'>Remaining: {remainingItemsCount} products</p>
+              </div>
+              )}
             </div>
           </div>
         </div>

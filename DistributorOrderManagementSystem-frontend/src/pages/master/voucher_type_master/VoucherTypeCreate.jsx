@@ -1,6 +1,7 @@
 import axios from "axios";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HiXMark } from "react-icons/hi2";
+import { useNavigate } from "react-router-dom";
 
 const VoucherTypeCreate = () => {
 	const [voucherType, setVoucherType] = useState({
@@ -16,6 +17,10 @@ const VoucherTypeCreate = () => {
 		suffix: "",
 	});
 	const inputRefs = useRef([])
+	const [showModal, setShowModal] = useState(false);
+	const navigate = useNavigate();
+	const yesQuitButtonRef = useRef(null);
+	const cancelModalConfirmRef = useRef(null);
 	// const [VoucherNo, setVoucherNo] = useState("")
 
 	// const generateVoucherNo = (voucherType)=>{
@@ -50,6 +55,13 @@ const VoucherTypeCreate = () => {
 			} else {
 				e.preventDefault();
 			}
+		} else if (key === 'Backspace'){
+			if (e.target.value.trim() === "") {
+				const prevField = index - 1;
+				if (prevField >= 0) {
+					inputRefs.current[prevField].focus();
+				}
+			}
 		}
 	}
 
@@ -63,6 +75,55 @@ const VoucherTypeCreate = () => {
 			console.log(voucherType)
 			}
 		}
+	};
+
+	useEffect(() => {
+		const handleModalFunc = event => {
+			const {ctrlKey, key} = event;
+			if ((ctrlKey && key === 'q') || key === 'Escape') {
+				event.preventDefault();
+				setShowModal(true);
+			}
+		};
+		
+		document.addEventListener('keydown',handleModalFunc);
+		return () => document.removeEventListener('keydown',handleModalFunc);
+	},[]);
+
+	useEffect(() => {
+		if (showModal) {
+		  yesQuitButtonRef.current.focus();
+		  const handleModalKeyDown = event => {
+			if (event.key.toLowerCase() === 'y') {
+			  handleModalConfirm();
+			} else if (event.key === 'n') {
+			  handleModalClose();
+			} else if (event.key === 'ArrowLeft') {
+			  cancelModalConfirmRef.current.focus();
+			} else if (event.key === 'ArrowRight') {
+			  yesQuitButtonRef.current.focus();
+			}
+		  };
+	
+		  document.addEventListener('keydown', handleModalKeyDown);
+	
+		  return () => {
+			document.removeEventListener('keydown', handleModalKeyDown);
+		  };
+		}
+	  }, [showModal]);
+
+	const handleModalClose = () => {
+		setShowModal(false);
+
+	// Check if the inputRefs array has the first input element
+	if (inputRefs.current[0]) {
+		inputRefs.current[0].focus();
+	}
+	};
+
+	const handleModalConfirm = () => {
+		navigate('/create');
 	}
 	
 	return (
@@ -76,7 +137,7 @@ const VoucherTypeCreate = () => {
 						</h1>
 						<HiXMark
 							className="text-[12px] text-base cursor-pointer"
-							// onClick={() => navigate("/")}
+							onClick={() => navigate("/create")}
 						/>
 					</div>
 
@@ -250,7 +311,9 @@ const VoucherTypeCreate = () => {
 										autoComplete="off"
 										name="suffix"
 										autoCapitalize="words"
-										onKeyDown={handleSubmit}
+										onKeyDown={(e) => {handleSubmit(e); if (e.key === 'Backspace' && e.target.value === ''){e.preventDefault(); if (inputRefs.current[8] && inputRefs.current[8].focus){
+											inputRefs.current[8].focus();
+										}}}}
 										value={voucherType.suffix}
 										className="w-24 capitalize border border-transparent outline-0 h-[18px] focus:border focus:border-blue-500 focus:bg-amber-100 text-[13px] font-semibold"
 									/>
@@ -260,6 +323,58 @@ const VoucherTypeCreate = () => {
 					</div>
 					</form>
 				</div>
+				{/* Modal */}
+				{showModal && (
+					<div className="fixed z-10 inset-0 overflow-y-auto">
+						<div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+						<div className="fixed inset-0 transition-opacity" aria-hidden="true">
+							<div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+						</div>
+
+						<span
+							className="hidden sm:inline-block sm:align-middle sm:h-screen"
+							aria-hidden="true"
+						>
+							&#8203;
+						</span>
+
+						<div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+							<div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+							<div className="sm:flex sm:items-start">
+								<div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+								<h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+									Quit Confirmation
+								</h3>
+								<div className="mt-2">
+									<p className="text-sm text-gray-500">
+									Are you sure you want to quit without saving changes?
+									</p>
+								</div>
+								</div>
+							</div>
+							</div>
+							<div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+								<button
+									type="button"
+									onClick={handleModalConfirm}
+									ref={yesQuitButtonRef}
+									className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-slate-600 text-base font-medium text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:ml-3 sm:w-auto sm:text-sm"
+								>
+									Yes, Quit
+								</button>
+								<button
+									type="button"
+									ref={cancelModalConfirmRef}
+									onClick={handleModalClose}
+									className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+								>
+									Cancel
+								</button>
+							</div>
+						</div>
+						</div>
+					</div>
+				)}
 				
 				<div className="w-[10%] bg-[#def1fc]"></div>
 			</div>

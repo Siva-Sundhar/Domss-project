@@ -85,7 +85,7 @@ const AlterofMasters = () => {
           <div className="w-[50%] bg-white"></div>
 
           <div className="w-[65%] bg-slate-100 flex justify-center items-center flex-col">
-            <div className="w-[300px] h-96 border border-blue-400 text-sm bg-[#def1fc] mt-[94px] ml-[2px]">
+            <div className="w-[300px] h-96 border border-blue-400 text-sm bg-[#def] mt-[94px] ml-[2px]">
               <h2 className="text-white bg-[#2a67b1] px-20">Alter of Masters</h2>
 
               <ul>

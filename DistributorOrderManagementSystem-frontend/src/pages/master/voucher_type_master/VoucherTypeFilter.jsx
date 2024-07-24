@@ -9,18 +9,20 @@ const VoucherTypeFilter = () => {
   const [filteredVoucherNames, setFilteredVoucherNames] = useState([]);
   const [filteredVoucherTypes, setFilteredVoucherTypes] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [startIndex, setStartIndex] = useState(0);
+  const [remainingItemsCount, setRemainingItemsCount] = useState(0);
   const inputRef = useRef(null);
+  const selectedRef = useRef(null);
   const navigate = useNavigate();
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     inputRef.current.focus();
 
     listOfVoucherTypeNames()
       .then(response => {
-        console.log(response.data);
         setVoucherTypeNames(response.data);
         setFilteredVoucherNames(response.data);
-        setSelectedIndex(response.data.length > 0 ? 2 : 0);
       })
       .catch(error => {
         console.error(error);
@@ -28,7 +30,6 @@ const VoucherTypeFilter = () => {
 
     listOfVoucherTypes()
       .then(response => {
-        console.log(response.data);
         setVoucherTypes(response.data);
         setFilteredVoucherTypes(response.data);
       })
@@ -38,18 +39,40 @@ const VoucherTypeFilter = () => {
   }, []);
 
   useEffect(() => {
+    filterVoucherNames();
+  }, [voucherTypeName]);
+
+  useEffect(() => {
     const handleKeyDown = e => {
+      const totalItems = filteredVoucherNames.length + filteredVoucherTypes.length + 2; // Create, Back
       if (e.key === 'ArrowDown') {
-        setSelectedIndex(
-          prevIndex =>
-            (prevIndex + 1) % (filteredVoucherNames.length + filteredVoucherTypes.length + 2),
-        );
+        if (selectedIndex < totalItems - 1) { // Ensure we don't go beyond the last item
+          setSelectedIndex(prevIndex => {
+            const newIndex = prevIndex + 1;
+            if (newIndex >= 2 && newIndex >= startIndex + ITEMS_PER_PAGE) {
+              setStartIndex(prevStartIndex => {
+                const newStartIndex = Math.min(filteredVoucherNames.length + filteredVoucherTypes.length - ITEMS_PER_PAGE, prevStartIndex + 1);
+                setRemainingItemsCount(filteredVoucherNames.length + filteredVoucherTypes.length - (newStartIndex + ITEMS_PER_PAGE));
+                return newStartIndex;
+              });
+            }
+            return newIndex;
+          });
+        }
       } else if (e.key === 'ArrowUp') {
-        setSelectedIndex(
-          prevIndex =>
-            (prevIndex - 1 + filteredVoucherNames.length + filteredVoucherTypes.length + 2) %
-            (filteredVoucherNames.length + filteredVoucherTypes.length + 2),
-        );
+        if (selectedIndex > 0) { // Ensure we don't go before the "Create" link
+          setSelectedIndex(prevIndex => {
+            const newIndex = prevIndex - 1;
+            if (newIndex >= 2 && newIndex < startIndex) {
+              setStartIndex(prevStartIndex => {
+                const newStartIndex = Math.max(0, prevStartIndex - 1);
+                setRemainingItemsCount(filteredVoucherNames.length + filteredVoucherTypes.length - (newStartIndex + ITEMS_PER_PAGE));
+                return newStartIndex;
+              });
+            }
+            return newIndex;
+          });
+        }
       } else if (e.key === 'Enter') {
         if (selectedIndex === 0) {
           navigate('/create/voucherType');
@@ -77,7 +100,13 @@ const VoucherTypeFilter = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [filteredVoucherNames, filteredVoucherTypes, selectedIndex, navigate]);
+  }, [filteredVoucherNames, filteredVoucherTypes, selectedIndex, navigate, startIndex]);
+
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedIndex]);
 
   const filterVoucherNames = () => {
     if (voucherTypeName === '') {
@@ -85,18 +114,32 @@ const VoucherTypeFilter = () => {
       setFilteredVoucherTypes(voucherTypes);
     } else {
       const filteredNames = voucherTypeNames.filter(vou =>
-        vou.voucherTypeName.toLowerCase().includes(voucherTypeName.toLowerCase()),
+        vou.voucherTypeName.toLowerCase().includes(voucherTypeName.toLowerCase())
       );
 
       const filteredTypes = voucherTypes.filter(vou =>
-        vou.voucherType.toLowerCase().includes(voucherTypeName.toLowerCase()),
+        vou.voucherType.toLowerCase().includes(voucherTypeName.toLowerCase())
       );
 
       setFilteredVoucherNames(filteredNames);
       setFilteredVoucherTypes(filteredTypes);
     }
+    setStartIndex(0);
+    setRemainingItemsCount((filteredVoucherNames.length + filteredVoucherTypes.length) - ITEMS_PER_PAGE);
     setSelectedIndex(2); // Reset selection index after filtering
   };
+
+  const displayedVoucherNames = filteredVoucherNames.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  const displayedVoucherTypes = filteredVoucherTypes.slice(
+    startIndex - Math.max(filteredVoucherNames.length - ITEMS_PER_PAGE, 0),
+    startIndex + ITEMS_PER_PAGE - filteredVoucherNames.length
+  );
+
+  const totalDisplayedItems = displayedVoucherNames.length + displayedVoucherTypes.length;
 
   return (
     <>
@@ -124,7 +167,7 @@ const VoucherTypeFilter = () => {
               />
             </div>
 
-            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def1fc]">
+            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def]">
               <h2 className="p-1 bg-[#2a67b1] text-white text-left text-[13px]">
                 List of Voucher Types
               </h2>
@@ -205,6 +248,11 @@ const VoucherTypeFilter = () => {
               </table>
             </div>
           </div>
+          {totalDisplayedItems > ITEMS_PER_PAGE && (
+            <div className="mt-2 w-[350px] h-6 border border-t-0 border-gray-600 bg-[#def1fc] flex justify-end pr-2">
+              <p className="text-[12px] text-black">Remaining Items: {remainingItemsCount}</p>
+            </div>
+          )}
         </div>
       </div>
     </>

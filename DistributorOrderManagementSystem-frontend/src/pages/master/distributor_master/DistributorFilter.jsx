@@ -4,15 +4,14 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const DistributorFilter = () => {
   const [distributorCode, setDistributorCode] = useState('');
-
   const [distributor, setDistributor] = useState([]);
-
   const [filteredDistributors, setFilteredDistributors] = useState([]);
-
   const [selectedIndex, setSelectedIndex] = useState(0);
-
+  const [remainingItemsCount, setRemainingItemsCount] = useState(0);
+  const [startIndex, setStartIndex] = useState(0);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     inputRef.current.focus();
@@ -21,6 +20,7 @@ const DistributorFilter = () => {
       .then(response => {
         setDistributor(response.data);
         setFilteredDistributors(response.data);
+        setRemainingItemsCount(response.data.length - ITEMS_PER_PAGE);
         setSelectedIndex(response.data.length > 0 ? 2 : 0);
       })
       .catch(error => {
@@ -34,13 +34,36 @@ const DistributorFilter = () => {
 
   useEffect(() => {
     const handleKeyDown = e => {
+      const totalItems = filteredDistributors.length + 2; // +2 for create and back
       if (e.key === 'ArrowDown') {
-        setSelectedIndex(prevIndex => (prevIndex + 1) % (filteredDistributors.length + 2)); // +2 for create and back
+        if (selectedIndex < totalItems - 1){  // Ensure we don't go beyond the last item
+          setSelectedIndex((prevIndex) =>{
+            const newIndex = (prevIndex + 1) % totalItems;
+            if (newIndex >= 2 && newIndex - 2 >= startIndex + ITEMS_PER_PAGE){
+              setStartIndex((prevStartIndex) => {
+                const newStartIndex = Math.min(filteredDistributors.length - ITEMS_PER_PAGE, prevStartIndex + 1);
+                setRemainingItemsCount(filteredDistributors.length - (newStartIndex + ITEMS_PER_PAGE));
+                return newStartIndex;
+              })
+            }
+            return newIndex;
+          })
+        }
       } else if (e.key === 'ArrowUp') {
-        setSelectedIndex(
-          prevIndex =>
-            (prevIndex - 1 + (filteredDistributors.length + 2)) % (filteredDistributors.length + 2),
-        );
+        if (selectedIndex > 0) {  // Ensure we don't go before the "Create" link
+          setSelectedIndex((prevIndex) =>{
+            const newIndex = (prevIndex - 1 + totalItems) % totalItems;
+            if (newIndex <= 2 && newIndex - 2 < startIndex){
+              setStartIndex((prevStartIndex) => {
+                const newStartIndex = Math.max(0, prevStartIndex - 1);
+                setRemainingItemsCount(filteredDistributors.length - (newStartIndex + ITEMS_PER_PAGE));
+                return newStartIndex;
+              })
+            }
+            e.preventDefault();
+            return newIndex;
+          })
+        }
       } else if (e.key === 'Enter') {
         if (selectedIndex === 0) {
           navigate('/create/distributor');
@@ -62,7 +85,13 @@ const DistributorFilter = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [filteredDistributors, selectedIndex, navigate]);
+  }, [filteredDistributors, selectedIndex, navigate, startIndex]);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedIndex]);
 
   const filterDistributors = () => {
     if (distributorCode === '') {
@@ -73,8 +102,15 @@ const DistributorFilter = () => {
       );
       setFilteredDistributors(filtered);
     }
-    setSelectedIndex(filteredDistributors.length > 0 ? 2 : 0); //Reset selected index to the first element in the filtered list
+    setStartIndex(0);
+    setRemainingItemsCount(filteredDistributors.length - ITEMS_PER_PAGE);
+    setSelectedIndex(filteredDistributors.length > 0 ? 2 : 0); // Reset selected index to the first element in the filtered list
   };
+
+  const displayedDistributors = filteredDistributors.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   return (
     <>
@@ -99,16 +135,10 @@ const DistributorFilter = () => {
               />
             </div>
 
-            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def1fc]">
+            <div className="w-[350px] h-[85vh] border border-gray-600 bg-[#def]">
               <h2 className="p-1 bg-[#2a67b1] text-white text-left text-[13px]">
                 List of Distributor
               </h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                  </tr>
-                </thead>
                 <div className="border border-b-gray-500 w-[347px]">
                   <Link
                     className={`block text-center text-[13px] focus:bg-[#FEB941] outline-none ${
@@ -127,21 +157,34 @@ const DistributorFilter = () => {
                     <p className="ml-[287px] text-[14px] ">Back</p>
                   </Link>
                 </div>
-                <tbody>
-                  {filteredDistributors.map((dis, index) => (
-                    <tr
-                      key={dis.distributorCode}
-                      className={selectedIndex === index + 2 ? 'bg-[#FEB941]' : ''}
-                    >
-                      <td className="flex text-left text-[13px] capitalize pl-2">
-                        <Link className="block" to={`/displayDistributor/${dis.distributorCode}`}>
-                          {dis.distributorCode}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                <div className='h-[68vh] overflow-hidden'>
+                  <table className='w-full'>
+                    <thead>
+                      <tr>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayedDistributors.map((dis, index) => (
+                        <tr
+                          key={dis.distributorCode}
+                          className={selectedIndex === index + 2 ? 'bg-[#FEB941]' : ''}
+                        >
+                          <td className="w-[350px]">
+                            <Link className="text-[12.5px]" to={`/displayDistributor/${dis.distributorCode}`} tabIndex={0} onFocus={() => setSelectedIndex(index + 2)}>
+                              <div className='flex text-left pl-2 capitalize'>{dis.distributorCode}</div>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredDistributors.length > ITEMS_PER_PAGE && (
+                  <div className='text-left p-2 bg-[#2a67b1]'>
+                    <p className='text-[13px] text-white'>Remaining: {remainingItemsCount} distributors</p>
+                  </div>
+                )} 
             </div>
           </div>
         </div>
